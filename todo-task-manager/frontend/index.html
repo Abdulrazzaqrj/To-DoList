@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Tasks – To-Do Task Manager</title>
+  <script>try{var t=localStorage.getItem('tm.theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="logo" aria-label="Application logo">UI</div>
+    <nav class="nav">
+      <button class="nav-btn active" data-nav="home" data-tip="Dashboard" aria-label="Dashboard"><span data-icon="home" data-size="26"></span></button>
+      <button class="nav-btn" data-nav="stats" data-tip="Task statistics" aria-label="Task statistics"><span data-icon="stats" data-size="26"></span></button>
+      <button class="nav-btn" data-nav="reports" data-tip="Reports (export CSV)" aria-label="Reports, export CSV"><span data-icon="pie" data-size="26"></span></button>
+      <button class="nav-btn" data-nav="calendar" data-tip="Task calendar" aria-label="Task calendar"><span data-icon="calendar" data-size="26"></span></button>
+      <button class="nav-btn" data-nav="tasks" data-tip="Task management" aria-label="Task management"><span data-icon="box" data-size="26"></span></button>
+      <button class="nav-btn" id="themeBtn" data-nav="theme" data-tip="Toggle dark mode" aria-label="Toggle dark mode"><span id="themeIcon" data-icon="moon" data-size="26"></span></button>
+      <button class="nav-btn" data-nav="settings" data-tip="Settings" aria-label="Settings"><span data-icon="settings" data-size="26"></span></button>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="search" id="search">
+        <input id="searchInput" type="search" placeholder="Search title or description…" aria-label="Search tasks" autocomplete="off">
+        <button class="icon-btn" id="searchBtn" aria-label="Search" data-icon="search" data-size="26"></button>
+      </div>
+      <div class="pop-wrap">
+        <button class="icon-btn" id="bellBtn" aria-label="Notifications" aria-haspopup="true"><span data-icon="bell" data-size="26"></span><span class="dot" id="bellDot" hidden></span></button>
+        <div class="menu notif" id="bellMenu" hidden></div>
+      </div>
+      <div class="pop-wrap">
+        <button class="avatar" id="avatarBtn" aria-label="User menu" aria-haspopup="true">
+          <svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2b38a"/><stop offset="1" stop-color="#b9543e"/></linearGradient></defs><circle cx="20" cy="20" r="20" fill="url(#g)"/><circle cx="20" cy="16" r="6.5" fill="#fbe3d0"/><path d="M7 36c1-8 7-11 13-11s12 3 13 11" fill="#2e3a66"/><path d="M13.5 13c1-5 12-6 13 0-2-2-11-2-13 0z" fill="#4a2a1f"/></svg>
+        </button>
+        <div class="menu" id="userMenu" hidden>
+          <button data-user="theme">Toggle dark mode</button>
+          <button data-user="export">Export tasks (CSV)</button>
+          <button data-user="settings">Settings</button>
+        </div>
+      </div>
+    </header>
+
+    <h1>My Tasks</h1>
+
+    <div class="tabs-row">
+      <div class="tabs" role="tablist" aria-label="Task collections">
+        <button role="tab" class="tab active" data-tab="ASSIGNED" aria-selected="true">Assigned Tasks</button>
+        <button role="tab" class="tab" data-tab="ACCEPTED" aria-selected="false">Accepted Tasks</button>
+        <button role="tab" class="tab" data-tab="REVIEW" aria-selected="false">Review Tasks</button>
+      </div>
+      <div class="chips" id="chips" aria-live="polite"></div>
+    </div>
+
+    <section class="filters" aria-label="Filters">
+      <label class="field date"><span data-icon="calendar" data-size="22"></span><input type="date" id="dateFilter" aria-label="Filter by due date"><span class="ph" id="datePh">Due date</span></label>
+      <label class="field select"><select id="statusFilter" aria-label="Choose status">
+        <option value="">Choose Status</option><option value="PENDING">Pending</option><option value="IN_PROGRESS">In Progress</option><option value="COMPLETED">Completed</option></select><span data-icon="chevron" data-size="20"></span></label>
+      <button class="btn-filter" id="filterBtn">Filter</button>
+      <button class="btn-link" id="resetBtn" hidden>Reset</button>
+      <button class="btn-create" id="createBtn"><span data-icon="plus" data-size="22"></span>Create New Task</button>
+    </section>
+
+    <div class="banner" id="banner" role="alert" hidden><span id="bannerMsg"></span><button id="retryBtn">Retry</button></div>
+
+    <div class="table-wrap" id="tableWrap" aria-busy="false">
+      <table>
+        <thead><tr>
+          <th data-sort="title">Title</th><th data-sort="priority">Priority</th><th data-sort="status">Status</th>
+          <th data-sort="createdBy">Created by</th><th data-sort="assignedDate">Date Assigned</th><th data-sort="dueDate">Due Date</th><th class="th-actions">Actions</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="loader" id="loader" hidden><span class="spinner"></span>Loading tasks…</div>
+    </div>
+
+    <footer class="pager">
+      <span class="lbl">Rows per page:</span>
+      <label class="field select rows"><select id="sizeSelect" aria-label="Rows per page"><option>5</option><option selected>10</option><option>20</option><option>50</option></select><span data-icon="chevron" data-size="20"></span></label>
+      <span class="range" id="range">0 of 0</span>
+      <button class="icon-btn" id="prevBtn" aria-label="Previous page"><span data-icon="left" data-size="22"></span></button>
+      <button class="icon-btn" id="nextBtn" aria-label="Next page"><span data-icon="right" data-size="22"></span></button>
+    </footer>
+  </main>
+</div>
+
+<div class="menu" id="moreMenu" hidden></div>
+
+<!-- Create / edit -->
+<dialog id="taskDialog" aria-labelledby="formTitle">
+  <form id="taskForm" novalidate>
+    <div class="dlg-head"><h2 id="formTitle">Create New Task</h2><button type="button" class="icon-btn" data-close aria-label="Close" data-icon="x" data-size="22"></button></div>
+    <div class="dlg-body grid">
+      <div class="full"><label for="fTitle">Task Title *</label><input id="fTitle" name="title" maxlength="150" placeholder="e.g. Prepare sprint report"><small class="err" data-err="title"></small></div>
+      <div class="full"><label for="fDesc">Description</label><textarea id="fDesc" name="description" rows="4" maxlength="2000" placeholder="Add more details…"></textarea><small class="err" data-err="description"></small></div>
+      <div><label for="fDue">Deadline / Due Date *</label><input id="fDue" name="dueDate" type="date"><small class="err" data-err="dueDate"></small></div>
+      <div><label for="fPriority">Priority</label><select id="fPriority" name="priority"><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select><small class="err" data-err="priority"></small></div>
+      <div><label for="fStatus">Status</label><select id="fStatus" name="status"><option value="PENDING">Pending</option><option value="IN_PROGRESS">In Progress</option><option value="COMPLETED">Completed</option></select><small class="err" data-err="status"></small></div>
+      <div><label for="fStage">Task list</label><select id="fStage" name="stage"><option value="ASSIGNED">Assigned Tasks</option><option value="ACCEPTED">Accepted Tasks</option><option value="REVIEW">Review Tasks</option></select></div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn-ghost" data-close>Cancel</button><button type="submit" class="btn-create sm" id="saveBtn">Save Task</button></div>
+  </form>
+</dialog>
+
+<!-- Details -->
+<dialog id="detailsDialog" aria-labelledby="dTitle">
+  <div class="dlg-head"><h2 id="dTitle">Task details</h2><button type="button" class="icon-btn" data-close aria-label="Close" data-icon="x" data-size="22"></button></div>
+  <div class="dlg-body" id="detailsBody"></div>
+  <div class="dlg-foot"><button class="btn-ghost" data-close>Close</button></div>
+</dialog>
+
+<!-- Confirm delete -->
+<dialog id="confirmDialog" aria-labelledby="cTitle">
+  <div class="dlg-head"><h2 id="cTitle">Delete task?</h2></div>
+  <div class="dlg-body"><p id="confirmText"></p></div>
+  <div class="dlg-foot"><button class="btn-ghost" data-close>Cancel</button><button class="btn-danger" id="confirmBtn">Delete</button></div>
+</dialog>
+
+<!-- Statistics -->
+<dialog id="statsDialog" aria-labelledby="sTitle">
+  <div class="dlg-head"><h2 id="sTitle">Task statistics</h2><button type="button" class="icon-btn" data-close aria-label="Close" data-icon="x" data-size="22"></button></div>
+  <div class="dlg-body"><div class="stat-grid" id="statGrid"></div></div>
+</dialog>
+
+<!-- Calendar -->
+<dialog id="calDialog" class="wide" aria-labelledby="calLabel">
+  <div class="dlg-head"><h2>Task calendar</h2><button type="button" class="icon-btn" data-close aria-label="Close" data-icon="x" data-size="22"></button></div>
+  <div class="dlg-body">
+    <div class="cal-nav"><button class="icon-btn" id="calPrev" aria-label="Previous month" data-icon="left" data-size="22"></button><strong id="calLabel"></strong><button class="icon-btn" id="calNext" aria-label="Next month" data-icon="right" data-size="22"></button></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <p class="hint">Cells show tasks due that day. Click a day to filter the table by that due date.</p>
+  </div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="settingsDialog" aria-labelledby="setTitle">
+  <form id="settingsForm" method="dialog">
+    <div class="dlg-head"><h2 id="setTitle">Settings</h2><button type="button" class="icon-btn" data-close aria-label="Close" data-icon="x" data-size="22"></button></div>
+    <div class="dlg-body grid">
+      <div class="full"><label for="sName">Your name (used as “Created by”)</label><input id="sName" maxlength="100" placeholder="Me"></div>
+      <div><label for="sRows">Default rows per page</label><select id="sRows"><option>5</option><option>10</option><option>20</option><option>50</option></select></div>
+      <div><label for="sTheme">Theme</label><select id="sTheme"><option value="light">Light</option><option value="dark">Dark</option></select></div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn-ghost" data-close>Cancel</button><button type="submit" class="btn-create sm">Save</button></div>
+  </form>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="js/app.js"></script>
+</body>
+</html>
